@@ -28,12 +28,28 @@ required_modules = [
     'cv2'
 ]
 
+# Map import names -> pip package names for installation
+install_name_map = {
+    # pywin32 provides the win32* modules
+    'win32api': 'pywin32',
+    'win32con': 'pywin32',
+    'win32gui': 'pywin32',
+    # opencv's python package name is opencv-python
+    'cv2': 'opencv-python'
+}
+
 missing_modules = [mod for mod in required_modules if importlib.util.find_spec(mod) is None]
 
 if missing_modules:
     with st.spinner(f"Installing missing modules: {', '.join(missing_modules)}"):
+        # Translate missing import names into pip package names and deduplicate
+        packages_to_install = set()
         for mod in missing_modules:
-            subprocess.run(["pip", "install", mod], capture_output=True)
+            pkg = install_name_map.get(mod, mod)
+            packages_to_install.add(pkg)
+
+        for pkg in sorted(packages_to_install):
+            subprocess.run(["pip", "install", pkg], capture_output=True)
     restart()
 
 import requests
